@@ -1,6 +1,7 @@
 library(R.matlab)
 getwd()
-setwd("C:\\Users\\apalu\\Desktop\\mgr\\72107")
+setwd("kod_i_dane_matlab-stara_wersja_kodu")
+
 dane <-readMat("Data_DieboldLi.mat")
 
 maturities <- dane$maturities
@@ -40,7 +41,7 @@ mu0 <- colMeans(beta)
 
 param0 <- list(A0, Q0, H0, mu0, lambda0)
 param0 <-unlist(param0)
-#param1 <- c(0.990104430123422, -0.0281240136916211, 0.0517849291657113, 0.0249684220940171, 0.942561543530871,
+#param0_matlab <- c(0.990104430123422, -0.0281240136916211, 0.0517849291657113, 0.0249684220940171, 0.942561543530871,
 #0.0124733219740373, -0.00229431907867095, 0.0286993873750660, 0.788078795496486, 0.338906023889202, 0, 0, 
 #0.627898385454499, 0, 1.10237105011337, 0.141709398459525, 0.0728948481276874, 0.114923387137557, 0.111200084878294,
 #0.0905579451691759, 0.0767207451043713, 0.0722210755302052, 0.0707643092581408, 0.0701289067342859, 0.0726736638115494,
@@ -89,7 +90,8 @@ Build_DieboldLi <- function(param, yields){
   #0.674691362241433,	0.794438604581112,	2.95707829241291),3,3,byrow=T)
   
   P0 <- matrix(solve((diag(1,9) - A %x% A)) %*% matrix(Q,9,1),3,3) #page 138 - Time Series Analysis by State Space Methods; Second Edition, J. Durbin, S. J. Koopman
-
+  P1inf <- diag(1,3,3)
+  a1 <- matrix(0,3)
   return(SSModel(as.matrix(deflatedYield) ~ -1 + SSMcustom(P1 = P0, Z = as.matrix(C), T = as.matrix(A), R =  matrix(c(1,0,0,0,1,0,0,0,1),3,3), Q = as.matrix(Q)), H=as.matrix(H)))
 }
 
@@ -106,16 +108,15 @@ updatefn<- function(pars, model, yields){
 }
 
 fitted_model <- fitSSM(initial_model, param0, updatefn, update_args = list(yields = yields), 
-                       method = "BFGS", control = list(trace = 6, maxit = 100000, reltol=1e-10, ndeps=rep(1e-4,36),
-                                                       fnscale=0.01))
-     
+                       method = "BFGS", control = list(trace = 6, maxit = 100000, ndeps=rep(1e-5,36)))
+
 #pars=param0
 # calc_loglik <- function(pars, yields){
 #   pars[33]<-pars[33]*10
 #   pars[34]<-pars[34]*10
 #   pars[35]<-pars[35]*10
 #   new_model <- Build_DieboldLi(param = pars, yields = yields)
-#   cost <- -logLik(new_model)
+#   cost <- -logLik(initial_model)
 #   #print(cost)
 #   if (is.na(cost)){
 #     return(9999)
@@ -140,6 +141,14 @@ fitted_model <- fitSSM(initial_model, param0, updatefn, update_args = list(yield
 
 estimated_model <- fitted_model$model
 estimated_parameters <- fitted_model$optim.out$par
+
+#matlab final loglik: 3184.553024590277  
+#matlab estimated parameters:
+# params <- c(0.994379534, -0.029000675, 0.025273442, 0.028596299, 0.939107357, 0.022918016, -0.022113864, 0.039582824,
+#             0.841468145, 0.307593089, -0.045278948, 0.142056958, 0.616976663, 0.025480271, 0.882416067, 0.268233668,
+#             0.075493268, 0.090294723, 0.104508294, 0.099150289, 0.0864779, 0.078629986, 0.072091124, 0.07268272,
+#             0.079096104, 0.102954872, 0.092607469, 0.100415228, 0.111761682, 0.106970331, 0.15070029, 0.172784562,
+#             8.024602633, -1.442312972, -0.418834565, 0.077764082)
 
 mu <- matrix(c(estimated_parameters[33],estimated_parameters[34],estimated_parameters[35]),c(3,1))
 intercept <- matrix(estimated_model$Z,c(17,3)) %*% mu 

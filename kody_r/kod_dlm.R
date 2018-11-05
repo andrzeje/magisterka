@@ -1,7 +1,7 @@
 #install.packages('R.matlab')
 library(R.matlab)
 getwd()
-setwd("C:\\Users\\apalu\\Desktop\\mgr\\72107")
+setwd("kod_i_dane_matlab-stara_wersja_kodu")
 dane <-readMat("Data_DieboldLi.mat")
 
 maturities <- dane$maturities
@@ -32,17 +32,17 @@ A0 <-matrix(EstMdlVAR$ar,c(3,3))
 
 Q0 <- matrix(EstMdlVAR$var.pred,3,3)
 #Q0 <- t(chol(Q0))
-Q0 <- log(c((Q0[1]),(Q0[5]),(Q0[9])))
+Q0 <- sqrt(c(Q0[1],0,0,Q0[5],0,Q0[9]))
 
 H0 <- cov(residuals)
 H0 <- diag(H0)
 H0 <- H0[H0>0]
-H0 <- log(H0)
+H0 <- sqrt(H0)
 
 #H0 <- sqrt(H0)
 
 mu0 <- colMeans(beta)
-mu0 <- c(8.0246,   -1.4423,   -0.4188)
+#mu0 <- c(8.0246,   -1.4423,   -0.4188)
 
 Cov0 <- cov(beta)
 Cov0 <- t(chol(Cov0))
@@ -52,11 +52,11 @@ Cov0 <- c(Cov0[1],Cov0[2],Cov0[3],Cov0[5],Cov0[6],Cov0[9])
 
 param0 <- list(A0, Q0, H0, mu0, lambda0)
 param0 <-unlist(param0)
-param0 <- c(0.994379534, -0.029000675, 0.025273442, 0.028596299, 0.939107357, 0.022918016, -0.022113864, 0.039582824,
-            0.841468145, 0.307593089, -0.045278948, 0.142056958, 0.616976663, 0.025480271, 0.882416067, 0.268233668,
-            0.075493268, 0.090294723, 0.104508294, 0.099150289, 0.0864779, 0.078629986, 0.072091124, 0.07268272,
-            0.079096104, 0.102954872, 0.092607469, 0.100415228, 0.111761682, 0.106970331, 0.15070029, 0.172784562,
-            8.024602633, -1.442312972, -0.418834565, 0.077764082)
+# param0 <- c(0.994379534, -0.029000675, 0.025273442, 0.028596299, 0.939107357, 0.022918016, -0.022113864, 0.039582824,
+#             0.841468145, 0.307593089, -0.045278948, 0.142056958, 0.616976663, 0.025480271, 0.882416067, 0.268233668,
+#             0.075493268, 0.090294723, 0.104508294, 0.099150289, 0.0864779, 0.078629986, 0.072091124, 0.07268272,
+#             0.079096104, 0.102954872, 0.092607469, 0.100415228, 0.111761682, 0.106970331, 0.15070029, 0.172784562,
+#             8.024602633, -1.442312972, -0.418834565, 0.077764082)
 param<-param0
 yield<-yields
 maturity<-maturities
@@ -95,12 +95,10 @@ Build_DieboldLi <- function(param, yields){
   intercept <- C %*% m
   deflatedYield <- yields - matrix(t(intercept)[col(yields)],lenTseries,numMaturities)
 
-  m0<-matrix(0,numFactors)
-  C0<-matrix(c(4.33110517514536,	-0.352953505542163,	0.674691362241432,
-                   -0.352953505542163,	3.96117338253019,	0.794438604581112,
-                   0.674691362241433,	0.794438604581112,	2.95707829241291),3,3)
+  a0<-matrix(0,numFactors)
+  P0 <- matrix(solve((diag(1,9) - A %x% A)) %*% matrix(Q,9,1),3,3) #page 138 - Time Series Analysis by State Space Methods; Second Edition, J. Durbin, S. J. Koopman
   
-  return(list(dlm(m0=m0, C0=C0, FF = C, V = H, GG = A, W = Q),deflatedYield))
+  return(list(dlm(m0=a0, C0=P0, FF = C, V = H, GG = A, W = Q),deflatedYield))
 }
 
 library(dlm)
