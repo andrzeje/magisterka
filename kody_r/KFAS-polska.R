@@ -94,7 +94,7 @@ Build_DieboldLi <- function(param, yields, maturities){
   
   P1inf <- diag(0,3,3)
   a1 <- matrix(0,3)
-  return(SSModel(as.matrix(deflatedYield) ~ -1 + SSMcustom(P1 = P0, Z = as.matrix(C), T = as.matrix(A), R =  matrix(c(1,0,0,0,1,0,0,0,1),3,3), Q = as.matrix(Q)), H=as.matrix(H)))
+  return(SSModel(as.matrix(deflatedYield) ~ -1 + SSMcustom(P1 = P0, a1 = a1, Z = as.matrix(C), T = as.matrix(A), R =  matrix(c(1,0,0,0,1,0,0,0,1),3,3), Q = as.matrix(Q)), H=as.matrix(H)))
 }
 
 initial_model <- Build_DieboldLi(param = param0, yields = yields, maturities = maturities)
@@ -110,7 +110,7 @@ updatefn<- function(pars, model, yields, maturities){
 }
 logLik(initial_model)
 fitted_model <- fitSSM(initial_model, param0, updatefn, update_args = list(yields = yields, maturities = maturities), 
-                       method = "BFGS", control = list(trace = 6, maxit = 100000, ndeps=rep(1e-5,numParams)))
+                       method = "BFGS", control = list(trace = 6, maxit = 100000, ndeps=rep(1e-8,numParams)))
 
 #pars=param0
 # calc_loglik <- function(pars, yields){
@@ -181,6 +181,7 @@ loading <- matrix(0,length(decay),length(tau))
 for (i in 1:2){
   loading[i,] <- ((1-exp(-decay[i]*tau))/(decay[i]*tau)-exp(-decay[i]*tau))
 }
+
 plot(loading[1,], col="blue", type="l")
 lines(loading[2,], col="red") 
 
