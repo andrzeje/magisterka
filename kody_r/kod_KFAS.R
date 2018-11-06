@@ -1,6 +1,6 @@
 library(R.matlab)
-getwd()
-setwd("kod_i_dane_matlab-stara_wersja_kodu")
+home <- "C:/Users/apalu/Desktop/magisterka"
+setwd(paste0(home,"/kod_i_dane_matlab-stara_wersja_kodu"))
 
 dane <-readMat("Data_DieboldLi.mat")
 
