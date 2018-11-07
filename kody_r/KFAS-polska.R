@@ -15,7 +15,7 @@ beta <- matrix(0,nrow(yields),3)
 residuals <- matrix(0,nrow(yields),length(maturities))
 
 for (i in 1:nrow(yields)){
-  olsfit <- lm(unlist(yields[i,])~X-1)
+  olsfit <- lm(unlist(yields[i,])~X-1,na.action = na.exclude)
   beta[i,] <- unname(olsfit$coefficients)
   residuals[i,] <- unname(olsfit$residuals)
 }
@@ -113,33 +113,34 @@ fitted_model <- fitSSM(initial_model, param0, updatefn, update_args = list(yield
                        method = "BFGS", control = list(trace = 6, maxit = 100000, ndeps=rep(1e-8,numParams)))
 
 #pars=param0
-# calc_loglik <- function(pars, yields){
-#   pars[33]<-pars[33]*10
-#   pars[34]<-pars[34]*10
-#   pars[35]<-pars[35]*10
-#   new_model <- Build_DieboldLi(param = pars, yields = yields)
-#   cost <- -logLik(initial_model)
-#   #print(cost)
-#   if (is.na(cost)){
-#     return(9999)
-#   } else{
-#     return(cost)
-#   }
-# }
-# library(pso)
-# param0[15]<-0.99999999
-# param0[33]<-param0[33]/10
-# param0[34]<-param0[34]/10
-# param0[35]<-param0[35]/10
-# est_param <- psoptim(par = param0, fn = calc_loglik, lower = -1, upper = 1, control = list(trace = 6, s=100), yields = yields)
-# est_param <- optim(par = param0, fn = calc_loglik, method = "L-BFGS-B", control = list(trace = 6, maxit = 10), yields = yields)
-# 
-# est_param$par[33] = est_param$par[33]*10
-# est_param$par[34] = est_param$par[34]*10
-# est_param$par[35] = est_param$par[35]*10
-# estimated_model <- Build_DieboldLi(param = est_param$par, yields = yields)
-# tt <- matrix(estimated_model$y,c(348,17)) + (t(matrix(estimated_model$Z,c(17,3)) %*% matrix(c(est_param$par[33],est_param$par[34],est_param$par[35]))))[col(matrix(estimated_model$y,c(348,17)))]
+calc_loglik <- function(pars, yields,maturities){
+  pars[numParams-3]<-pars[numParams-3]*10
+  pars[numParams-2]<-pars[numParams-2]*10
+  pars[numParams-1]<-pars[numParams-1]*10
+  new_model <- Build_DieboldLi(param = pars, yields = yields, maturities = maturities)
+  cost <- -logLik(new_model)
+  #print(cost)
+  #print(pars)
+  if (is.na(cost)){
+    return(9999)
+  } else{
+    return(cost)
+  }
+}
+library(pso)
+#param0[15]<-0.99999999
+param0[numParams-3]<-param0[numParams-3]/10
+param0[numParams-2]<-param0[numParams-2]/10
+param0[numParams-1]<-param0[numParams-1]/10
+est_param <- psoptim(par = param0, fn = calc_loglik, control = list(trace = 6, s=100), yields = yields, maturities = maturities)
+ est_param <- optim(par = param0, fn = calc_loglik, method = "BFGS", control = list(trace = 6, maxit = 1000), yields = yields, maturities = maturities)
 
+est_param$par[numParams-3] = est_param$par[numParams-3]*10
+est_param$par[numParams-2] = est_param$par[numParams-2]*10
+est_param$par[numParams-1] = est_param$par[numParams-1]*10
+estimated_model <- Build_DieboldLi(param = est_param$par, yields = yields, maturities = maturities)
+tt <- matrix(estimated_model$y,c(348,17)) + (t(matrix(estimated_model$Z,c(17,3)) %*% matrix(c(est_param$par[33],est_param$par[34],est_param$par[35]))))[col(matrix(estimated_model$y,c(348,17)))]
+estimated_parameters <- est_param$par
 
 estimated_model <- fitted_model$model
 estimated_parameters <- fitted_model$optim.out$par
@@ -193,6 +194,8 @@ residualMeanSSM <- 100*colMeans(residualsSSM)
 residualStdSSM <- 100*apply(residualsSSM, 2, sd)
 residualMean2Step <- 100*colMeans(residuals2Step)
 residualStd2Step <- 100*apply(residuals2Step, 2, sd)
+
+abs(residualMean2Step)-abs(residualMeanSSM)
 
 sum(residualsSSM^2)
 sum(residuals2Step^2)

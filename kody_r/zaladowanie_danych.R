@@ -21,7 +21,7 @@ for (i in 1:length(wibor_file_names)){
   assign(wibor_var_names[i],temp[,5])
 }
 
-used_bonds <- c("3m","6m","9m","12m","24m","36m","48m","60m","72m","96m","108m","120m")
+used_bonds <- c("3m","6m","9m","12m","24m","36m","48m","60m","120m")
 maturities <- matrix(c(1,as.numeric(sub('m', '', used_bonds, fixed = TRUE))))
 
 
@@ -40,5 +40,6 @@ for (bond in used_bonds){
 
 yields <- as.data.frame(data)
 
+write.csv(yields,"yieldspl.csv")
 yields <- yields[-(1:30),]
   
