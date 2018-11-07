@@ -200,7 +200,7 @@ abs(residualMean2Step)-abs(residualMeanSSM)
 sum(residualsSSM^2)
 sum(residuals2Step^2)
 
-forecastDeflated <- predict(estimated_model,n.ahead = 12)
+forecastDeflated <- predict(estimated_model,n.ahead = 1)
 a=c()
 for(i in 1:numMaturities){
   new<-forecastDeflated[[i]]
